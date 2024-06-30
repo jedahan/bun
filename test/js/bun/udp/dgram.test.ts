@@ -186,5 +186,74 @@ describe("createSocket()", () => {
       });
       server.bind();
     });
+
+    test(`send broadcast ${label}`, done => {
+      const client = createSocket("udp4");
+      const closed = { closed: false };
+      client.on("close", () => {
+        closed.closed = true;
+      });
+      const server = createSocket("udp4");
+      client.on("error", err => {
+        expect(err).toBeNull();
+      });
+      server.on("error", err => {
+        expect(err).toBeNull();
+      });
+      server.on("message", (data, rinfo) => {
+        validateRecv(server, data, rinfo, Buffer.from([...bytes, ...bytes, ...bytes].flat()));
+
+        server.close();
+        client.close();
+        done();
+      });
+      function sendRec() {
+        if (!closed.closed) {
+          client.setBroadcast(true);
+          // TODO switch address to 127.0.0.255
+          client.send([data, data, data], server.address().port, "127.0.0.1", () => {
+            setTimeout(sendRec, 100);
+          });
+        }
+      }
+      server.on("listening", () => {
+        sendRec();
+      });
+      server.bind();
+    });
+
+    test(`send broadcast fails when setBroadcast is false ${label}`, done => {
+      const client = createSocket("udp4");
+      const closed = { closed: false };
+      client.on("close", () => {
+        closed.closed = true;
+      });
+      const server = createSocket("udp4");
+      client.on("error", err => {
+        // TODO: expect it to be non-null
+        expect(err).toBeObject();
+      });
+      server.on("error", err => {
+        expect(err).toBeNull();
+      });
+      server.on("message", (data, rinfo) => {
+        validateRecv(server, data, rinfo, Buffer.from([...bytes, ...bytes, ...bytes].flat()));
+
+        server.close();
+        client.close();
+        done();
+      });
+      function sendRec() {
+        if (!closed.closed) {
+          client.send([data, data, data], server.address().port, "127.0.0.255", () => {
+            setTimeout(sendRec, 100);
+          });
+        }
+      }
+      server.on("listening", () => {
+        sendRec();
+      });
+      server.bind();
+    });
   }
 });

@@ -458,6 +458,23 @@ pub const UDPSocket = struct {
         return JSValue.jsNumber(res);
     }
 
+    pub fn setBroadcast(
+        this: *This,
+        globalThis: *JSGlobalObject,
+        callframe: *CallFrame,
+    ) callconv(.C) JSValue {
+        const arguments = callframe.arguments(1);
+        const on = arguments.ptr[0];
+
+        const res = std.c.setsockopt(this.socket, std.posix.SOL.SOCKET, std.posix.SO.BROADCAST, &on, 1);
+
+        if (bun.JSC.Maybe(void).errnoSys(res, .setBroadcast)) |err| {
+            globalThis.throwValue(err.toJS(globalThis));
+            return .zero;
+        }
+        return JSValue.jsBoolean(res > 0);
+    }
+
     pub fn send(
         this: *This,
         globalThis: *JSGlobalObject,
@@ -743,6 +760,38 @@ pub const UDPSocket = struct {
             .port = port,
         };
         // TODO reset cached remoteAddress property
+
+        return .undefined;
+    }
+
+    pub fn jsSetBroadcast(globalObject: *JSC.JSGlobalObject, callFrame: *JSC.CallFrame) callconv(.C) JSC.JSValue {
+        const args = callFrame.arguments(1);
+
+        const this = callFrame.this().as(UDPSocket) orelse {
+            globalObject.throwInvalidArguments("Expected UDPSocket as 'this'", .{});
+            return .zero;
+        };
+
+        if (args.len < 1) {
+            globalObject.throwInvalidArguments("Expected 1 argument", .{});
+            return .zero;
+        }
+
+        const on_js = args.ptr[0];
+
+        if (!on_js.isBoolean()) {
+            globalObject.throwInvalidArguments("Expected \"on\" to be a boolean", .{});
+            return .zero;
+        }
+
+        const on = on_js.asBoolean();
+        // in case we need to cast?
+        // const port: u16 = if (connect_port < 1 or connect_port > 0xffff) 0 else @as(u16, @intCast(connect_port));
+
+        if (this.socket.setBroadcast(on) == -1) {
+            globalObject.throw("Failed to setBroadcast", .{});
+            return .zero;
+        }
 
         return .undefined;
     }

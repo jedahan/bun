@@ -24,6 +24,7 @@ describe("udpSocket()", () => {
     expect(socket.unref).toBeFunction();
     expect(socket.send).toBeFunction();
     expect(socket.close).toBeFunction();
+    expect(socket.setBroadcast).toBeFunction();
     socket.close();
   });
 

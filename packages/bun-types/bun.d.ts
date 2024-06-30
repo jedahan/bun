@@ -4312,6 +4312,7 @@ declare module "bun" {
       sendMany(packets: readonly (Data | string | number)[]): number;
       send(data: Data, port: number, address: string): boolean;
       reload(handler: SocketHandler<DataBinaryType>): void;
+      setBroadcast(broadcast: boolean): void;
     }
   }
 

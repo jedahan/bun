@@ -2927,6 +2927,11 @@ pub const udp = struct {
             return us_udp_socket_send(this, payloads.ptr, lengths.ptr, addresses.ptr, @intCast(payloads.len));
         }
 
+        pub fn setBroadcast(this: *This, on: bool) c_int {
+            // I don't think this should be called....
+            return this.setBroadcast(on);
+        }
+
         pub fn user(this: *This) ?*anyopaque {
             return us_udp_socket_user(this);
         }

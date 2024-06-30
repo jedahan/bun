@@ -799,14 +799,12 @@ Socket.prototype.remoteAddress = function () {
   return socket.remoteAddress;
 };
 
-Socket.prototype.setBroadcast = function (arg) {
-  throwNotImplemented("setBroadcast", 10381);
-  /*
-  const err = this[kStateSymbol].handle.setBroadcast(arg ? 1 : 0);
-  if (err) {
-    throw new ErrnoException(err, 'setBroadcast');
-  }
-  */
+const setBroadcastFn = $newZigFunction("udp_socket.zig", "UDPSocket.jsSetBroadcast", 1);
+
+Socket.prototype.setBroadcast = function (on) {
+  const state = this[kStateSymbol];
+
+  setBroadcastFn.$call(state.handle.socket, on);
 };
 
 Socket.prototype.setTTL = function (ttl) {
